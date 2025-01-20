@@ -46,19 +46,44 @@ const isAdmin = async (req, res, next) => {
   }
 };
 
-const isUserOrAdmin = async (req, res, next) => {
+const isUserOrAdmin = (model) => async (req, res, next) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id);
 
-    if (user._id === req.user._id || req.user._id === 'admin') {
-      return next();
-    } else {
-      return res.status(401).json('No tienes permisos de administrador');
+    if (model.modelName === 'users') {
+      if (req.user._id.toString() === id || req.user.rol === 'admin') {
+        console.log('Permisos concedidos: el usuario tiene acceso');
+        return next();
+      } else {
+        return res
+          .status(401)
+          .json('No tienes permisos para eliminar este usuario');
+      }
     }
+
+    const resource = await model.findById(id);
+
+    if (!resource) {
+      console.log('Recurso no encontrado');
+      return res.status(400).json({ message: 'Recurso no encontrado' });
+    }
+
+    console.log('Recurso encontrado:', resource);
+
+    if (
+      resource.user.toString() === req.user._id.toString() ||
+      req.user.rol === 'admin'
+    ) {
+      console.log(
+        'Permisos concedidos: el recurso pertenece al usuario o el usuario es admin'
+      );
+      return next();
+    }
+
+    return res.status(401).json('No tienes permisos para realizar esta acción');
   } catch (error) {
+    console.log(error);
     return res.status(401).json('Error en isUserOrAdmin');
   }
 };
-
 module.exports = { isAuth, isAdmin, isUserOrAdmin };

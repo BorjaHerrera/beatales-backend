@@ -8,15 +8,20 @@ const {
   addFavoriteSong,
   getUserFavorites
 } = require('../controllers/users');
+const User = require('../models/users');
 
 const userRouter = require('express').Router();
 
 userRouter.post('/registro', register);
 userRouter.post('/login', login);
-userRouter.get('/:id', [isAuth], getUserById);
-userRouter.get('/:id/favoritas', [isAuth], getUserFavorites);
+userRouter.get('/:id', [isAuth, isUserOrAdmin(User)], getUserById);
+userRouter.get(
+  '/:id/favoritas',
+  [isAuth, isUserOrAdmin(User)],
+  getUserFavorites
+);
 userRouter.post('/:id/favoritas', [isAuth], addFavoriteSong);
-userRouter.delete('/:id', [isAuth, isAdmin], deleteUser);
-userRouter.get('/', [isAuth, isUserOrAdmin], getUsers);
+userRouter.delete('/:id', [isAuth, isUserOrAdmin(User)], deleteUser);
+userRouter.get('/', [isAuth, isAdmin], getUsers);
 
 module.exports = userRouter;

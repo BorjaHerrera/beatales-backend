@@ -2,17 +2,37 @@ const Song = require('../models/songs');
 
 const getSongs = async (req, res, next) => {
   try {
-    const songs = await Song.find();
+    const songs = await Song.find().populate('comments');
     return res.status(200).json(songs);
   } catch (error) {
     return res.status(400).json('Error en la solicitud Get Songs');
   }
 };
 
+const getSongsbyUser = async (req, res, next) => {
+  try {
+    const { user } = req.params;
+    const songs = await Song.find({ user }).populate('user');
+
+    if (songs.length === 0) {
+      return res.status(404).json({
+        message: `No se encontraron canciones para el usuario: ${user}`
+      });
+    }
+
+    return res.status(200).json(songs);
+  } catch (error) {
+    return res.status(400).json({
+      message: 'Error al obtener Songs by User.',
+      error: error
+    });
+  }
+};
+
 const getSongByName = async (req, res, next) => {
   try {
     const { name } = req.params;
-    const song = await Song.findOne({ name: name });
+    const song = await Song.findOne({ name: name }).populate('comments');
     return res.status(200).json(song);
   } catch (error) {
     return res.status(400).json('Error en la solicitud Get Song by Name');
@@ -21,15 +41,25 @@ const getSongByName = async (req, res, next) => {
 
 const postSong = async (req, res, next) => {
   try {
-    const { name } = req.body;
+    const { name, story, youtube } = req.body;
 
-    const existingSong = await Song.findOne({ name });
+    const normalizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // Comprobar si la canción ya existe
+    const existingSong = await Song.findOne({ normalizedName });
 
     if (existingSong) {
       return res.status(400).json('Esta canción ya existe');
     }
 
-    const newSong = new Song(req.body);
+    const newSong = new Song({
+      name,
+      story,
+      youtube,
+      normalizedName,
+      user: req.user.id
+    });
+
     const savedSong = await newSong.save();
 
     return res.status(201).json({
@@ -37,6 +67,7 @@ const postSong = async (req, res, next) => {
       canción: savedSong
     });
   } catch (error) {
+    console.error(error);
     return res.status(400).json('Error en la solicitud Post Song');
   }
 };
@@ -44,7 +75,14 @@ const postSong = async (req, res, next) => {
 const putSong = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const newSong = new Song(req.body);
+
+    const { name, ...rest } = req.body;
+
+    if (name) {
+      rest.normalizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    const newSong = new Song({ name, ...rest });
     newSong._id = id;
 
     const updatedSong = await Song.findByIdAndUpdate(id, newSong, {
@@ -74,4 +112,11 @@ const deleteSong = async (req, res, next) => {
   }
 };
 
-module.exports = { getSongs, getSongByName, postSong, putSong, deleteSong };
+module.exports = {
+  getSongs,
+  getSongsbyUser,
+  getSongByName,
+  postSong,
+  putSong,
+  deleteSong
+};
