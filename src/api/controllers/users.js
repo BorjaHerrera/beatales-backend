@@ -9,7 +9,10 @@ const register = async (req, res, next) => {
     const userDuplicated = await User.findOne({ email: req.body.email });
 
     if (userDuplicated) {
-      return res.status(400).json('Este usuario ya existe');
+      return res.status(400).json({
+        errorType: 'DUPLICATED_EMAIL',
+        message: 'Este usuario ya existe'
+      });
     }
 
     newUser.rol = 'user';
@@ -19,7 +22,10 @@ const register = async (req, res, next) => {
       .status(201)
       .json({ message: 'Usuario creado correctamente', user: user });
   } catch (error) {
-    return res.status(400).json('Error durante el registro de usuario');
+    return res.status(400).json({
+      errorType: 'OTHER_ERROR',
+      message: 'Error durante el registro de usuario'
+    });
   }
 };
 
@@ -30,17 +36,26 @@ const login = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json('Usuario o contraseña incorrectos');
+      return res.status(400).json({
+        errorType: 'INVALID_PASSWORD_OR_USER',
+        message: 'Usuario o contraseña incorrectos'
+      });
     }
 
     if (bcrypt.compareSync(password, user.password)) {
       const token = generateSign(user._id);
       return res.status(200).json({ user, token });
     } else {
-      return res.status(400).json('Usuario o contraseña incorrectos');
+      return res.status(400).json({
+        errorType: 'INVALID_PASSWORD_OR_USER',
+        message: 'Usuario o contraseña incorrectos'
+      });
     }
   } catch (error) {
-    return res.status(400).json('Error en el login de usuario');
+    return res.status(400).json({
+      errorType: 'OTHER_ERROR',
+      message: 'Error en el login de usuario'
+    });
   }
 };
 const getUsers = async (req, res, next) => {
