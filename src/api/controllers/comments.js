@@ -34,6 +34,21 @@ const getCommentById = async (req, res, next) => {
   }
 };
 
+const getCommentByNormalizeName = async (req, res, next) => {
+  try {
+    const { normalizedName } = req.params;
+
+    const song = await Song.findOne({ normalizedName });
+
+    const comment = await Comment.find({ song: song._id }).populate('song');
+    return res.status(200).json(comment);
+  } catch (error) {
+    return res
+      .status(400)
+      .json('Error en la solicitud Get Comments by NormalizeName');
+  }
+};
+
 const postComment = async (req, res, next) => {
   try {
     const { text, song } = req.body;
@@ -108,6 +123,7 @@ module.exports = {
   getComments,
   getCommentById,
   getCommentsByUser,
+  getCommentByNormalizeName,
   postComment,
   putComment,
   deleteComment

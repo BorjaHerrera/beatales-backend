@@ -29,13 +29,15 @@ const getSongsbyUser = async (req, res, next) => {
   }
 };
 
-const getSongByName = async (req, res, next) => {
+const getSongByNormalizeName = async (req, res, next) => {
   try {
-    const { name } = req.params;
-    const song = await Song.findOne({ name: name }).populate('comments');
+    const { normalizedName } = req.params;
+    const song = await Song.findOne({ normalizedName }).populate('comments');
     return res.status(200).json(song);
   } catch (error) {
-    return res.status(400).json('Error en la solicitud Get Song by Name');
+    return res
+      .status(400)
+      .json('Error en la solicitud Get Song by NormalizeName');
   }
 };
 
@@ -115,7 +117,7 @@ const deleteSong = async (req, res, next) => {
 module.exports = {
   getSongs,
   getSongsbyUser,
-  getSongByName,
+  getSongByNormalizeName,
   postSong,
   putSong,
   deleteSong

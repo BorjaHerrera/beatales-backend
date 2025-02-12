@@ -5,7 +5,8 @@ const {
   postComment,
   putComment,
   deleteComment,
-  getCommentById
+  getCommentById,
+  getCommentByNormalizeName
 } = require('../controllers/comments');
 const Comment = require('../models/comments');
 
@@ -20,6 +21,8 @@ commentsRouter.get(
 commentsRouter.post('/', [isAuth], postComment);
 commentsRouter.put('/:id', [isAuth, isUserOrAdmin(Comment)], putComment);
 commentsRouter.delete('/:id', [isAuth, isUserOrAdmin(Comment)], deleteComment);
+commentsRouter.get('/cancion/:normalizeName', getCommentByNormalizeName);
+
 commentsRouter.get('/', [isAuth, isAdmin], getComments);
 
 module.exports = commentsRouter;

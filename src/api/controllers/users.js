@@ -121,6 +121,36 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+const deleteFavoriteSong = async (req, res) => {
+  try {
+    const { id, songId } = req.params;
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { $pull: { favorites: songId } },
+      { new: true }
+    ).populate('favorites');
+
+    if (!user) {
+      return res.status(400).json({ message: 'Usuario no encontrado' });
+    }
+
+    const deletedSong = await Song.findById(songId);
+
+    if (!deletedSong) {
+      return res.status(400).json({ message: 'La canción no existe' });
+    }
+
+    return res.status(200).json({
+      message: 'Canción eliminada de favoritos',
+      deletedSong
+    });
+  } catch (error) {
+    console.error('Error al eliminar la canción de favoritos:', error);
+    return res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -128,5 +158,6 @@ module.exports = {
   getUserById,
   addFavoriteSong,
   getUserFavorites,
-  deleteUser
+  deleteUser,
+  deleteFavoriteSong
 };

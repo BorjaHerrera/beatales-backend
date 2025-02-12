@@ -1,11 +1,11 @@
 const { isAuth, isUserOrAdmin } = require('../../middlewares/auth');
 const {
-  getSongByName,
   getSongs,
   postSong,
   putSong,
   deleteSong,
-  getSongsbyUser
+  getSongsbyUser,
+  getSongByNormalizeName
 } = require('../controllers/songs');
 const Song = require('../models/songs');
 
@@ -16,7 +16,7 @@ songsRouter.get(
   [isAuth, isUserOrAdmin(Song)],
   getSongsbyUser
 );
-songsRouter.get('/cancion/:name', getSongByName);
+songsRouter.get('/cancion/:normalizedName', getSongByNormalizeName);
 songsRouter.post('/', [isAuth], postSong);
 songsRouter.put('/:id', [isAuth, isUserOrAdmin(Song)], putSong);
 songsRouter.delete('/:id', [isAuth, isUserOrAdmin(Song)], deleteSong);
