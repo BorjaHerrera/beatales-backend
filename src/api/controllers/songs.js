@@ -1,4 +1,5 @@
 const Song = require('../models/songs');
+const User = require('../models/users');
 
 const getSongs = async (req, res, next) => {
   try {
@@ -6,26 +7,6 @@ const getSongs = async (req, res, next) => {
     return res.status(200).json(songs);
   } catch (error) {
     return res.status(400).json('Error en la solicitud Get Songs');
-  }
-};
-
-const getSongsbyUser = async (req, res, next) => {
-  try {
-    const { user } = req.params;
-    const songs = await Song.find({ user }).populate('user');
-
-    if (songs.length === 0) {
-      return res.status(404).json({
-        message: `No se encontraron canciones para el usuario: ${user}`
-      });
-    }
-
-    return res.status(200).json(songs);
-  } catch (error) {
-    return res.status(400).json({
-      message: 'Error al obtener Songs by User.',
-      error: error
-    });
   }
 };
 
@@ -45,13 +26,26 @@ const postSong = async (req, res, next) => {
   try {
     const { name, story, youtube } = req.body;
 
+    const youtubeMusicRegex = /^(https?:\/\/)?(www\.)?music\.youtube\.com\/.+$/;
+
+    if (!youtubeMusicRegex.test(youtube)) {
+      return res.status(400).json({
+        errorType: 'YOUTUBE_ERROR',
+        message:
+          'El enlace debe ser de YouTube Music y debe comenzar con "https://music.youtube.com"'
+      });
+    }
     const normalizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
     // Comprobar si la canción ya existe
     const existingSong = await Song.findOne({ normalizedName });
 
     if (existingSong) {
-      return res.status(400).json('Esta canción ya existe');
+      console.log('Canción ya existe:', existingSong);
+      return res.status(400).json({
+        errorType: 'EXISTING_SONG_ERROR',
+        message: 'Esta canción ya está publicada'
+      });
     }
 
     const newSong = new Song({
@@ -63,6 +57,12 @@ const postSong = async (req, res, next) => {
     });
 
     const savedSong = await newSong.save();
+
+    await User.findByIdAndUpdate(
+      req.user.id,
+      { $push: { uploadedSongs: savedSong._id } },
+      { new: true }
+    );
 
     return res.status(201).json({
       message: 'La canción se ha creado correctamente',
@@ -116,7 +116,6 @@ const deleteSong = async (req, res, next) => {
 
 module.exports = {
   getSongs,
-  getSongsbyUser,
   getSongByNormalizeName,
   postSong,
   putSong,

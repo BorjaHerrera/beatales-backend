@@ -21,7 +21,7 @@ commentsRouter.get(
 commentsRouter.post('/', [isAuth], postComment);
 commentsRouter.put('/:id', [isAuth, isUserOrAdmin(Comment)], putComment);
 commentsRouter.delete('/:id', [isAuth, isUserOrAdmin(Comment)], deleteComment);
-commentsRouter.get('/cancion/:normalizeName', getCommentByNormalizeName);
+commentsRouter.get('/cancion/:normalizedName', getCommentByNormalizeName);
 
 commentsRouter.get('/', [isAuth, isAdmin], getComments);
 

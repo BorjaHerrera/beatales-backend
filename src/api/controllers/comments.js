@@ -38,14 +38,26 @@ const getCommentByNormalizeName = async (req, res, next) => {
   try {
     const { normalizedName } = req.params;
 
+    console.log('Normalized Name:', normalizedName);
+
     const song = await Song.findOne({ normalizedName });
 
-    const comment = await Comment.find({ song: song._id }).populate('song');
-    return res.status(200).json(comment);
+    if (!song) {
+      return res.status(404).json({ message: 'Canción no encontrada' });
+    }
+
+    // Obtener los comentarios sin populación innecesaria
+    const comments = await Comment.find({ song: song._id }).populate(
+      'user',
+      'name'
+    );
+
+    return res.status(200).json(comments);
   } catch (error) {
+    console.error('Error en getCommentByNormalizeName:', error);
     return res
       .status(400)
-      .json('Error en la solicitud Get Comments by NormalizeName');
+      .json({ message: 'Error en la solicitud Get Comments by NormalizeName' });
   }
 };
 

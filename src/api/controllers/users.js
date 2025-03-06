@@ -6,6 +6,7 @@ const Song = require('../models/songs');
 const register = async (req, res, next) => {
   try {
     const newUser = new User(req.body);
+
     const userDuplicated = await User.findOne({ email: req.body.email });
 
     if (userDuplicated) {
@@ -18,9 +19,14 @@ const register = async (req, res, next) => {
     newUser.rol = 'user';
 
     const user = await newUser.save();
-    return res
-      .status(201)
-      .json({ message: 'Usuario creado correctamente', user: user });
+
+    const token = generateSign(user._id);
+
+    return res.status(201).json({
+      message: 'Usuario creado correctamente',
+      user: user,
+      token: token
+    });
   } catch (error) {
     return res.status(400).json({
       errorType: 'OTHER_ERROR',
@@ -88,25 +94,51 @@ const getUserFavorites = async (req, res, next) => {
   }
 };
 
+const getUserUploaded = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id).populate('uploadedSongs');
+    return res.status(200).json(user.uploadedSongs);
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ message: 'Error en la solicitud Get User Uploaded', error });
+  }
+};
+
 const addFavoriteSong = async (req, res, next) => {
   try {
-    const { favorites } = req.body;
-    const songId = favorites;
-    const song = await Song.findById(songId);
+    let { favorites } = req.body;
+
+    if (!favorites) {
+      return res.status(400).json({ message: 'Falta el ID de la canción' });
+    }
+
+    if (!Array.isArray(favorites)) {
+      favorites = [favorites];
+    }
+
+    const songs = await Song.find({ _id: { $in: favorites } });
+    if (songs.length !== favorites.length) {
+      return res
+        .status(404)
+        .json({ message: 'Una o más canciones no fueron encontradas' });
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { $addToSet: { favorites: songId } },
+      { $addToSet: { favorites: { $each: favorites } } },
       { new: true }
     ).populate('favorites');
 
     return res.status(201).json({
-      message: `La canción se ha incluido en tu lista de favoritos.`,
-      user: user,
-      song: song
+      message: `Las canciones se han añadido a tus favoritos.`,
+      user,
+      favorites: user.favorites
     });
   } catch (error) {
-    return res.status(400).json('Error al agregar la canción a favoritos.');
+    console.error('Error al agregar las canciones a favoritos:', error);
+    return res.status(400).json({ message: 'Error interno del servidor' });
   }
 };
 
@@ -123,7 +155,8 @@ const deleteUser = async (req, res, next) => {
 
 const deleteFavoriteSong = async (req, res) => {
   try {
-    const { id, songId } = req.params;
+    const { id } = req.params;
+    const { songId } = req.body;
 
     const user = await User.findByIdAndUpdate(
       id,
@@ -156,6 +189,7 @@ module.exports = {
   login,
   getUsers,
   getUserById,
+  getUserUploaded,
   addFavoriteSong,
   getUserFavorites,
   deleteUser,
