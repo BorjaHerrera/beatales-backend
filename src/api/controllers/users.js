@@ -7,8 +7,11 @@ const register = async (req, res, next) => {
   try {
     const newUser = new User(req.body);
 
-    const userDuplicated = await User.findOne({ email: req.body.email });
+    if (req.file) {
+      newUser.profileImage = req.file.path;
+    }
 
+    const userDuplicated = await User.findOne({ email: req.body.email });
     if (userDuplicated) {
       return res.status(400).json({
         errorType: 'DUPLICATED_EMAIL',
@@ -17,7 +20,6 @@ const register = async (req, res, next) => {
     }
 
     newUser.rol = 'user';
-
     const user = await newUser.save();
 
     const token = generateSign(user._id);
@@ -28,9 +30,11 @@ const register = async (req, res, next) => {
       token: token
     });
   } catch (error) {
+    console.error('Error en el backend:', error);
     return res.status(400).json({
       errorType: 'OTHER_ERROR',
-      message: 'Error durante el registro de usuario'
+      message: 'Error durante el registro de usuario',
+      error: error.message
     });
   }
 };
@@ -64,6 +68,7 @@ const login = async (req, res, next) => {
     });
   }
 };
+
 const getUsers = async (req, res, next) => {
   try {
     const user = await User.find();

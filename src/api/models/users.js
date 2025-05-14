@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
     },
     password: { type: String, required: true, trim: true },
     name: { type: String, required: true, trim: true },
+    profileImage: { type: String, default: '' },
     rol: { type: String, required: true, enum: ['admin', 'user'] },
     favorites: [{ type: mongoose.Types.ObjectId, ref: 'songs' }],
     uploadedSongs: [{ type: mongoose.Types.ObjectId, ref: 'songs' }]

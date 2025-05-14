@@ -4,13 +4,19 @@ const express = require('express');
 const { connectDB } = require('./src/config/db');
 const mainRouter = require('./src/api/routes/main');
 const cors = require('cors');
+const { configCloudinary } = require('./src/config/cloudinary');
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: 'http://localhost:5173'
+  })
+);
 
 app.use(express.json());
 
 connectDB();
+configCloudinary();
 
 app.use('/api/v1', mainRouter);
 

@@ -1,4 +1,5 @@
 const { isAuth, isAdmin, isUserOrAdmin } = require('../../middlewares/auth');
+const upload = require('../../middlewares/file');
 const {
   register,
   login,
@@ -14,7 +15,7 @@ const User = require('../models/users');
 
 const userRouter = require('express').Router();
 
-userRouter.post('/registro', register);
+userRouter.post('/registro', upload.single('profileImage'), register);
 userRouter.post('/login', login);
 userRouter.get('/:id', [isAuth, isUserOrAdmin(User)], getUserById);
 // prettier-ignore
