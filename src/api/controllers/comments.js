@@ -46,10 +46,9 @@ const getCommentByNormalizeName = async (req, res, next) => {
       return res.status(404).json({ message: 'Canción no encontrada' });
     }
 
-    // Obtener los comentarios sin populación innecesaria
     const comments = await Comment.find({ song: song._id }).populate(
       'user',
-      'name'
+      'name profileImage'
     );
 
     return res.status(200).json(comments);
