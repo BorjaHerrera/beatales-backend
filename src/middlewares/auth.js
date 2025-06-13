@@ -23,6 +23,10 @@ const isAuth = async (req, res, next) => {
 
     const user = await User.findById(id);
 
+    if (!user) {
+      return res.status(404).json('No estás autorizado: Usuario no encontrado');
+    }
+
     user.password = null;
     req.user = user;
     next();
@@ -65,7 +69,7 @@ const isUserOrAdmin = (model) => async (req, res, next) => {
 
     if (!resource) {
       console.log('Recurso no encontrado');
-      return res.status(400).json({ message: 'Recurso no encontrado' });
+      return res.status(404).json({ message: 'Recurso no encontrado' });
     }
 
     console.log('Recurso encontrado:', resource);
